@@ -36,7 +36,7 @@ directory.
 # Collecting data
 A job can be locally executed through:
 ```shell
-python run_program.py dfs_bnb_parallel -j s7_1000_<length> -le <length> -ds vanEck1000
+python run_program.py dfs_bnb_parallel -j s7_1000_<length> -le <length>
 ```
 The code will overwrite the data currently in the jobs folder. We combined all
 results in the `/jobs/s7_1000_total` folder for computing the statistics and
