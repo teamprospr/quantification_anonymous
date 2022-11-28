@@ -239,7 +239,7 @@ if __name__ == "__main__":
     elif args.program == "dfs_bnb_serial":
         run_dfs_bnb_serial(args)
     elif args.program == "dfs_bnb_parallel":
-        run_dfs_bnb_serial(args)
+        run_bnb_dfs_parallel(args)
     # Give error when nothing could be parsed from the input.
     else:
         print("\nInput program could not be parsed..")
