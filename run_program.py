@@ -13,12 +13,12 @@ from arg_verifiers import job_type, dataset_type
 
 # Import Prospr protein related functions.
 from prospr import Protein, depth_first, depth_first_bnb
-from prospr.datasets import load_vanEck1000
 from prospr.visualize import plot_protein
 
 # Import experiments.
-from code.experiments.dfs_bnb_serial import dfs_bnb_serial
+from code.experiments.dfs_bnb_sequential import dfs_bnb_serial
 from code.experiments.dfs_bnb_parallel import dfs_bnb_parallel
+from code.helpers.datasets import load_proteins1000
 
 
 def parse_arguments(commands):
@@ -62,7 +62,7 @@ def parse_arguments(commands):
     parser.add_argument(
         "-ds",
         "--dataset",
-        default=load_vanEck1000,
+        default=load_proteins1000,
         type=dataset_type(),
         help="Dataset from prospr to use as input.",
     )

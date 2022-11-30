@@ -6,7 +6,7 @@ Description:    This file contains verifiers for the argument parser in main.
 
 import os
 import argparse
-from prospr.datasets import load_vanEck250, load_vanEck1000
+from code.helpers.datasets import load_proteins250, load_proteins1000
 
 
 def job_type():
@@ -51,10 +51,10 @@ def dataset_type():
         New Type function for argparse, verifies if the dataset exists within
         prospr and returns function pointer to the loader.
         """
-        if dataset_name == "vanEck250":
-            return load_vanEck250
-        elif dataset_name == "vanEck1000":
-            return load_vanEck1000
+        if dataset_name == "proteins250":
+            return load_proteins250
+        elif dataset_name == "proteins1000":
+            return load_proteins1000
 
         # If nothing could be parsed, throw error.
         raise argparse.ArgumentTypeError(
