@@ -200,7 +200,7 @@ def run_bnb_dfs_parallel(args):
     print(f"\tTime: {end_time - start_time}")
 
     # Write execution time to file if there is no timing of the groups yet.
-    time_filepath = f"{root}/results/time_HP_{args.groups}"
+    time_filepath = f"{root}/results/time_HP_{args.lengths}"
 
     if not os.path.exists(time_filepath):
         with open(time_filepath, "w") as fp:

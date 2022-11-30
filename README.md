@@ -21,7 +21,7 @@ parallel version is used to fold 16 proteins at the same time.
 The experiments are executed through jobs, which are located in the `/jobs`
 folder. Each job has a unique name, with in the folder a shell script with the
 same name. There is a job for each length of protein, and one folder with all
-results combined (`/job/s7_1000_total`). Note that the shell script for this
+results combined (`/job/s8_1000_total`). Note that the shell script for this
 folder is empty and just functions as a placeholder.
 
 A job is executed via the `run_program.py` program, which also allows for local
@@ -36,12 +36,13 @@ directory.
 # Collecting data
 A job can be locally executed through:
 ```shell
-python run_program.py dfs_bnb_parallel -j s7_1000_<length> -le <length>
+python run_program.py dfs_bnb_parallel -j s8_1000_<length> -le <length>
 ```
 The code will overwrite the data currently in the jobs folder. We combined all
-results in the `/jobs/s7_1000_total` folder for computing the statistics and
+results in the `/jobs/s8_1000_total` folder for computing the statistics and
 generating the figures.
 
+TODO: SLURM!
 Running on the Lisa cluster can be done by simply executing a job's shell script.
 
 
@@ -54,17 +55,17 @@ The `run_statistics.py` script compute the paper's statistics values for the:
 
 The goodness-of-fit tests for the distributions can be executed through:
 ```shell
-python run_statistics.py comp_dist_gof -j s7_1000_total -le 10 15 20 25
+python run_statistics.py comp_dist_gof -j s8_1000_total -le 10 15 20 25
 ```
 
 The goodness-of-fit tests for the parameters can be executed through:
 ```shell
-python run_statistics.py comp_params_gof -j s7_1000_total -le 10 15 20 25
+python run_statistics.py comp_params_gof -j s8_1000_total -le 10 15 20 25
 ```
 
 The structural statistics and number of recursions tests can be executed through:
 ```shell
-python run_statistics.py comp_stats_extrema -j s7_1000_total -le 10 15 20 25 
+python run_statistics.py comp_stats_extrema -j s8_1000_total -le 10 15 20 25 
 ```
 
 # Reproducing figures
@@ -83,15 +84,15 @@ python run_visualizer.py front_figure
 
 The instance hardness distributions can be generated through:
 ```shell
-python run_visualizer.py fit_group -j s7_1000_total -s --no_show
+python run_visualizer.py fit_group -j s8_1000_total -s --no_show
 ```
 
 The fitted parameters can be generated through:
 ```shell
-python run_visualizer.py params -j s7_1000_total -s --no_show
+python run_visualizer.py params -j s8_1000_total -s --no_show
 ```
 
 The fitted parameters can be generated through:
 ```shell
-python run_visualizer.py plot_hardest -j s7_1000_total -s --no_show
+python run_visualizer.py plot_hardest -j s8_1000_total -s --no_show
 ```

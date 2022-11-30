@@ -16,7 +16,7 @@ from code.helpers.visualizer import (
     plot_params,
     plot_dataset_boxplot,
     plot_easiest_hardest,
-    plot_hardest,
+    plot_conformation,
     plot_front_figure,
 )
 from prospr import load_vanEck1000
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "params",
         "dataset",
         "easiest_hardest",
-        "plot_hardest",
+        "plot_conf",
         "front_figure",
     ]
     args = parse_arguments(commands)
@@ -151,8 +151,8 @@ if __name__ == "__main__":
         )
     # Plot the conformations of the easiest and hardest instances for the given
     # lengths.
-    elif args.program == "plot_hardest":
-        plot_hardest(
+    elif args.program == "plot_conf":
+        plot_conformation(
             args.job,
             args.dataset,
             args.lengths,

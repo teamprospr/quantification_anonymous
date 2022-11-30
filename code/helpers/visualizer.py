@@ -58,7 +58,6 @@ def _style_hist_plot(
     # Set labels that are non length-dependent.
     ax.set_xlabel("Problem instance rank", fontsize=11)
     ax.tick_params(labelsize=10)
-    ax.set_title(title, fontsize=14)
 
     # Set hatch size smaller.
     plt.rcParams["hatch.linewidth"] = 0.15
@@ -355,7 +354,6 @@ def plot_fit_group(job, lengths, column="placed", show=True, save=False):
             linewidth=0.05,
             label=f"Length {length}",
             color=color,
-            # hatch=hatch_type,
         )
 
         # Fit data to the scaled probit function.
@@ -470,8 +468,6 @@ def plot_params(job, lengths, column="placed", show=True, save=False):
 
     # Plot the lines for each parameter.
     plt.figure(figsize=(4, 3.3), dpi=600)
-    plt.rcParams["ytick.labelright"] = True
-    plt.rcParams["ytick.labelleft"] = False
     sns.set_style("whitegrid")
     sns.lineplot(
         popts[["alpha", "beta"]],
@@ -520,7 +516,6 @@ def plot_params(job, lengths, column="placed", show=True, save=False):
 
     # Style the plot.
     plt.xticks(popts.index.values.astype(int))
-    plt.title("Fitted Probit parameters against protein length", fontsize=11)
     plt.xlabel("Protein length", fontsize=10)
     plt.ylabel("Parameter value", fontsize=10)
     plt.tick_params(labelsize=9)
@@ -528,7 +523,6 @@ def plot_params(job, lengths, column="placed", show=True, save=False):
     plt.ylim(0, 6.999)
 
     # Fix style of alpha and beta. Set labels for fit.
-    ax.yaxis.set_label_position("right")
     h, l = ax.get_legend_handles_labels()
     h[0].set_linestyle("-")
     h[1].set_linestyle("-")
@@ -695,7 +689,7 @@ def plot_easiest_hardest(
         plt.show()
 
 
-def plot_hardest(
+def plot_conformation(
     job, dataset, lengths, column="placed", show=True, save=False
 ):
     """
@@ -924,11 +918,6 @@ def plot_hardest(
     ax1.legend(handles=handles, labels=labels, loc="center", prop={"size": 12})
 
     # Fix labels.
-    fig.suptitle(
-        f"Easiest and hardest problem instances for lengths {lengths[0]} and "
-        f"{lengths[1]}",
-        fontsize=17,
-    )
     fig.supxlabel("Protein length", fontsize=14)
     ax3.set_xlabel(f"{lengths[0]}", fontsize=12)
     ax4.set_xlabel(f"{lengths[1]}", fontsize=12)
@@ -939,7 +928,7 @@ def plot_hardest(
     # Save if specified.
     if save:
         plt.savefig(
-            f"figures/{job}/hardest_{lengths}_n{nprot}.pdf",
+            f"figures/{job}/conf_{lengths}_n{nprot}.pdf",
             format="pdf",
             dpi=600,
         )

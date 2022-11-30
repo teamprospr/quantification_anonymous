@@ -2,7 +2,7 @@
 """
 File:           bnb_dfs_parallel.py
 Description:    This file uses the bnb_dfs algorithm in parallel to compute
-                statistics for the specified groups of the specified dataset.
+                statistics for the specified lengths of the specified dataset.
                 The computed statistics are:
                     - Time it took to compute exact minimum of the score.
                     - Minimum found score.
@@ -19,14 +19,13 @@ from pathlib import Path
 from prospr import Protein, depth_first_bnb
 
 
-def load_proteins(results_path, dataset, lengths, dim):
+def load_proteins(results_path, dataset, lengths):
     """
     Detect complete or partially complete results, and only load the proteins
     that need to be finished.
     :param results_path:    Path to the results folder.
     :param dataset:         Function to load dataset data.
     :param lengths:         Lengths to process.
-    :param dim:             Dimension in which the Proteins will be folded.
     :return:                List of Protein objects, grouped by length.
     """
     proteins = {}
@@ -35,13 +34,13 @@ def load_proteins(results_path, dataset, lengths, dim):
     # Print debug header for loading dataset if debug is on.
     print("Loading Dataset Info:")
 
-    # Load protein strings into Protein objects from groups that are not
+    # Load protein strings into Protein objects from lengths that are not
     # finished.
     for l in lengths:
         length_filepath = f"{results_path}/HP_{l}_bnb_dfs"
 
         if os.path.exists(f"{length_filepath}.csv"):
-            # Skip group if all proteins are already finished.
+            # Skip length if all proteins are already finished.
             print(f"\tResults detected, skipping length {l}..")
             continue
         elif os.path.exists(f"{length_filepath}_TMP.csv"):
@@ -53,7 +52,7 @@ def load_proteins(results_path, dataset, lengths, dim):
                 df = pd.read_csv(fp)
                 finished_ids = df["protein_id"].values
         else:
-            # Load all proteins if group has never been computed.
+            # Load all proteins if length has never been computed.
             print(
                 f"\tNo results detected for length {l}, loading all "
                 f"proteins.."
@@ -62,7 +61,7 @@ def load_proteins(results_path, dataset, lengths, dim):
         # Only load the protein with length l which are not finished.
         df = dataset(l)
         proteins[l] = [
-            (row.id, Protein(row.sequence, dim, model="HP"))
+            (row.id, row.sequence)
             for _, row in df.iterrows()
             if row.id not in finished_ids
         ]
@@ -73,16 +72,16 @@ def load_proteins(results_path, dataset, lengths, dim):
     return proteins
 
 
-def print_debug_head(largest_group, proc_count, dataset, results_path):
+def print_debug_head(largest_length, proc_count, dataset, results_path):
     """
     Print debug info header and start of the progress debug info.
-    :param int  largest_group:      Number of proteins in the largest group.
+    :param int  largest_length:      Number of proteins in the largest length.
     :param int  proc_count:         Number of used processes.
-    :param func  dataset:           Path to the used dataset.
+    :param func dataset:            Function call to get the used dataset.
     :param str  results_path:       Path to where the results will be stored.
     """
     print("Experiment Info:")
-    print("\tLargest group:             ", largest_group)
+    print("\tLargest length:            ", largest_length)
     print("\tNumber of processes:       ", proc_count)
     print("\tData path:                 ", dataset.__name__)
     print("\tResults path:              ", results_path, end="\n\n")
@@ -90,11 +89,11 @@ def print_debug_head(largest_group, proc_count, dataset, results_path):
     print("=========")
 
 
-def listener(group_filepath, size, q):
+def listener(length_filepath, size, q):
     """
     Listener that fetches all results from queue and then writes them in
-    order of protein id.
-    :param str      group_filepath:     Path where the results will be written
+    order of protein id. Only one Listener process is created!
+    :param str      length_filepath:    Path where the results will be written
                                         to.
     :param int      size:               Number of proteins that produce
                                         results.
@@ -111,15 +110,15 @@ def listener(group_filepath, size, q):
         "placed",
         "hash",
     ]
-    add_header = not os.path.exists(f"{group_filepath}_TMP.csv")
+    add_header = not os.path.exists(f"{length_filepath}_TMP.csv")
 
-    with open(f"{group_filepath}_TMP.csv", "a") as fp:
+    with open(f"{length_filepath}_TMP.csv", "a") as fp:
         csv_writer = csv.writer(fp)
 
         if add_header:
             csv_writer.writerow(header)
 
-        # Fetch all results and store in the group's temporary file.
+        # Fetch all results and store in the length's temporary file.
         while len(results) != size:
             message = q.get()
             results.append(message)
@@ -128,14 +127,14 @@ def listener(group_filepath, size, q):
     # When all results have been gathered, save them ordered by protein id.
     # Load all proteins from TMP file, since previous results also need to be
     # stored.
-    with open(f"{group_filepath}_TMP.csv", "r") as fp:
+    with open(f"{length_filepath}_TMP.csv", "r") as fp:
         fp.readline()
         reader = csv.reader(fp)
         results = [(int(row[0]), *row[1:]) for row in reader]
         results.sort()
 
-    # Store all results
-    with open(f"{group_filepath}.csv", "w") as fp:
+    # Store all results.
+    with open(f"{length_filepath}.csv", "w") as fp:
         csv_writer = csv.writer(fp)
         csv_writer.writerow(header)
 
@@ -143,17 +142,19 @@ def listener(group_filepath, size, q):
             csv_writer.writerow(row)
 
     # Delete temporary file and end listener process.
-    os.remove(f"{group_filepath}_TMP.csv")
+    os.remove(f"{length_filepath}_TMP.csv")
 
 
-def worker(protein, p_id, q, debug=False):
+def worker(p_sequence, dim, p_id, q, debug=False):
     """
     Worker that folds one protein and stores statistics in queue.
-    :param Protein  protein:    Protein object to process.
+    :param str      p_sequence: Protein sequence to create Protein with.
+    :param int      dim:        Dimension of the protein to be made.
     :param int      p_id:       ID of the protein to process.
     :param Queue    q:          Manager.Queue() object for sending results.
     :param bool     debug:      Flag set if debug info needs to be printed.
     """
+    protein = Protein(p_sequence, dim=dim, model="HP")
     start_time = time()
     depth_first_bnb(protein)
     end_time = time()
@@ -173,8 +174,16 @@ def worker(protein, p_id, q, debug=False):
     if debug:
         print(
             f"\t       Worker for {p_id} done in {end_time - start_time} \t"
-            f"seconds"
+            f"seconds",
+            flush=True,
         )
+
+
+def worker_error_handler(error):
+    """Error callback in case a worker fails."""
+    print(
+        f"Worker error {error}\n\tProc: {mp.current_process()}\n", flush=True
+    )
 
 
 def dfs_bnb_parallel(
@@ -186,6 +195,7 @@ def dfs_bnb_parallel(
     :param func     dataset:    Function call to loading the data.
     :param int[]    lengths:    What lengths to use, e.g. [10, 20].
     :param int      max_procs:  Maximum number of processes to create.
+    :param int      dim:        Dimension of the protein to be made.
     :param bool     exec_lisa:  Flag set if run environment is the Lisa
                                 cluster.
     :param bool     debug:      Flag set if debug info needs to be printed.
@@ -202,16 +212,16 @@ def dfs_bnb_parallel(
     # Create results directory, if not exist.
     Path(results_path).mkdir(parents=True, exist_ok=True)
 
-    # Load proteins of all groups in a dictionary.
-    proteins = load_proteins(results_path, dataset, lengths, dim)
+    # Load proteins of all given lengths in a dictionary.
+    proteins = load_proteins(results_path, dataset, lengths)
 
     # Exit if there are no proteins that need to be processed.
     if not proteins.values():
         print_debug_head(1, 1, dataset, results_path)
-        print("\tNo protein requires processing, shutting down..")
+        print("\tNo protein requires processing, shutting down..", flush=True)
         return
 
-    # Set number of processes equal the maximum number of proteins in a group,
+    # Set number of processes equal the maximum number of proteins per length,
     # or the given maximum.
     proc_count = max(map(len, proteins.values()))
 
@@ -229,36 +239,45 @@ def dfs_bnb_parallel(
     q = manager.Queue()
     pool = mp.Pool(proc_count)
 
-    # Perform parallel execution for every group and store results
+    # Perform parallel execution for every length and store results
     # sequentially.
-    for i, (group_id, group_proteins) in enumerate(proteins.items()):
-        group_filepath = f"{results_path}/HP_{group_id}_bnb_dfs"
+    for i, (length, cur_proteins) in enumerate(proteins.items()):
+        length_filepath = f"{results_path}/HP_{length}_bnb_dfs"
 
-        # Initialise listener for writing statistics for current group.
+        # Initialise listener for writing statistics for current length.
         workers = [
-            pool.apply_async(
-                listener, (group_filepath, len(group_proteins), q)
-            )
+            pool.apply_async(listener, (length_filepath, len(cur_proteins), q))
         ]
 
         if debug:
-            print(f"\t[{i + 1}/{len(lengths)}]  Listener created")
+            print(f"\t[{i + 1}/{len(lengths)}]  Listener created", flush=True)
 
         # Create a task per protein for the workers.
-        for j, p in group_proteins:
-            workers.append(pool.apply_async(worker, (p, j, q, debug)))
+        for p_id, p_sequence in cur_proteins:
+            workers.append(
+                pool.apply_async(
+                    worker,
+                    (p_sequence, dim, p_id, q, debug),
+                    error_callback=worker_error_handler,
+                )
+            )
 
             if debug:
-                print(f"\t[{i + 1}/{len(lengths)}]  Worker for {j} created")
+                print(
+                    f"\t[{i + 1}/{len(lengths)}]  Task for {p_id} created",
+                    flush=True,
+                )
 
-        # Wait for all workers to finish the current group.
+        # Wait for all workers to finish the current length.
         [w.get() for w in workers]
 
         if debug:
-            print(f"\t[{i + 1}/{len(lengths)}]  All workers done\n")
+            print(
+                f"\t[{i + 1}/{len(lengths)}]  All workers done\n", flush=True
+            )
 
     if debug:
-        print("\tAll work done, closing pool..")
+        print("\tAll work done, closing pool..", flush=True)
 
     pool.close()
     pool.join()
