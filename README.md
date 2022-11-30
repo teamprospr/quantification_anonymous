@@ -42,6 +42,17 @@ Both `run_statistics.py` and `run_visualizer.py` use helper code, which is
 located in the `/code/helpers` directory.
 
 
+# Installing requirements.
+The required Python packages can be simply installed through pip:
+```shell
+pip install -r requirements.txt
+``` 
+or
+```shell
+python -m pip install -r requirements.txt
+``` 
+
+
 # Collecting data
 An experiment can be locally executed through:
 ```shell
@@ -74,6 +85,7 @@ The structural statistics and number of recursions tests can be executed through
 ```shell
 python run_statistics.py comp_stats_extrema -j s8_1000_total -le 10 15 20 25 
 ```
+
 
 # Reproducing figures
 The `run_visualizer.py` script generates the papers used in the paper. Figures
